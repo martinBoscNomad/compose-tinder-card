@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        minSdk 24
+        minSdk 23
         targetSdk 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -52,3 +52,16 @@ dependencies {
     implementation "androidx.compose.runtime:runtime:$composeVersion"
     implementation "androidx.compose.ui:ui:$composeVersion"
 }
+
+task deleteJar(type: Delete) {
+    delete 'libs/jars/SwipeableCard-0.1.0.jar'
+}
+
+task createJar(type: Copy) {
+    from('build/intermediates/aar_main_jar/release/')
+    into('libs/jars/')
+    include('classes.jar')
+    rename('classes.jar', 'SwipeableCard-0.1.0.jar')
+}
+
+createJar.dependsOn(deleteJar, build)

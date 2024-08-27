@@ -22,6 +22,8 @@ import kotlin.math.abs
 fun Modifier.swipableCard(
     state: SwipeableCardState,
     onSwiped: (Direction) -> Unit,
+    onDrag: (Float) -> Unit,
+    confirmSwipe: (Direction) -> Boolean,
     onSwipeCancel: () -> Unit = {},
     blockedDirections: List<Direction> = listOf(Direction.Up, Direction.Down),
 ) = pointerInput(Unit) {
@@ -59,22 +61,25 @@ fun Modifier.swipableCard(
                         val horizontalTravel = abs(state.offset.targetValue.x)
                         val verticalTravel = abs(state.offset.targetValue.y)
 
-                        if (horizontalTravel > verticalTravel) {
+                        val direction = if (horizontalTravel > verticalTravel) {
                             if (state.offset.targetValue.x > 0) {
-                                state.swipe(Direction.Right)
-                                onSwiped(Direction.Right)
+                                Direction.Right
                             } else {
-                                state.swipe(Direction.Left)
-                                onSwiped(Direction.Left)
+                                Direction.Left
                             }
                         } else {
                             if (state.offset.targetValue.y < 0) {
-                                state.swipe(Direction.Up)
-                                onSwiped(Direction.Up)
+                                Direction.Up
                             } else {
-                                state.swipe(Direction.Down)
-                                onSwiped(Direction.Down)
+                                Direction.Down
                             }
+                        }
+                        if(confirmSwipe(direction)) {
+                            state.swipe(direction)
+                            onSwiped(direction)
+                        } else {
+                            state.reset()
+                            onSwipeCancel()
                         }
                     }
                 }
@@ -82,9 +87,14 @@ fun Modifier.swipableCard(
         )
     }
 }.graphicsLayer {
-    translationX = state.offset.value.x
-    translationY = state.offset.value.y
-    rotationZ = (state.offset.value.x / 60).coerceIn(-40f, 40f)
+    if(translationX != state.offset.value.x) {
+        translationX = state.offset.value.x
+        rotationZ = (state.offset.value.x / 60).coerceIn(-40f, 40f)
+        onDrag(translationX)
+    }
+    if(translationY != state.offset.value.y) {
+        translationY = state.offset.value.y
+    }
 }
 
 private fun Offset.coerceIn(
